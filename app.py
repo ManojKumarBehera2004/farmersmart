@@ -10,8 +10,7 @@ import requests
 import json
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-here'
-
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
 # Ensure instance and upload folders exist early
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 INSTANCE_DIR = os.path.join(BASE_DIR, 'instance')
