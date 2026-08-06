@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Payment - FARMERS MART{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-credit-card"></i> Payment</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Order Details -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6>Order Details</h6>
+                            <p class="mb-1"><strong>Order ID:</strong> #{{ order.id }}</p>
+                            <p class="mb-1"><strong>Total Amount:</strong> ₹{{ "%.2f"|format(order.total_amount) }}</p>
+                            <p class="mb-1"><strong>Status:</strong> 
+                                <span class="badge bg-warning">{{ order.status.title() }}</span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Order Items</h6>
+                            {% for item in order.order_items %}
+                            <div class="d-flex justify-content-between mb-1">
+                                <small>{{ item.product.name }} ({{ item.quantity }}kg)</small>
+                                <small>₹{{ "%.2f"|format(item.price * item.quantity) }}</small>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- UPI Payment Section -->
+                    <div class="text-center mb-4">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> 
+                            <strong>Pay using UPI</strong><br>
+                            Scan the QR code or use the UPI ID below to complete your payment
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 text-center">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6>UPI QR Code</h6>
+                                    <!-- QR Code placeholder - in production, generate actual QR code -->
+                                    <div class="bg-white p-4 d-inline-block border">
+                                        <div style="width: 200px; height: 200px; background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmZmIi8+CiAgPHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzMzMyIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkZha2UgUVIgQ29kZTwvdGV4dD4KICA8cmVjdCB4PSIyMCIgeT0iMjAiIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgZmlsbD0iIzAwMCIvPgogIDxyZWN0IHg9IjYwIiB5PSIyMCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjIwIiBmaWxsPSIjMDAwIi8+CiAgPHJlY3QgeD0iMTAwIiB5PSIyMCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjIwIiBmaWxsPSIjMDAwIi8+CiAgPHJlY3QgeD0iMTQwIiB5PSIyMCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjIwIiBmaWxsPSIjMDAwIi8+CiAgPHJlY3QgeD0iMTYwIiB5PSIyMCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjIwIiBmaWxsPSIjMDAwIi8+Cjwvc3ZnPg==') center/contain no-repeat;"></div>
+                                    </div>
+                                    <p class="small text-muted mt-2">Scan with any UPI app</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6>UPI Payment Details</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label">UPI ID</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" value="trishulkumar6996@oksbi" readonly>
+                                            <button class="btn btn-outline-secondary" onclick="copyUpiId()">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Amount</label>
+                                        <input type="text" class="form-control" value="₹{{ '%.2f'|format(order.total_amount) }}" readonly>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Reference</label>
+                                        <input type="text" class="form-control" value="Order #{{ order.id }}" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Instructions -->
+                    <div class="alert alert-warning mt-4">
+                        <h6><i class="fas fa-exclamation-triangle"></i> Payment Instructions</h6>
+                        <ol class="mb-0">
+                            <li>Open your UPI app (PhonePe, Paytm, Google Pay, etc.)</li>
+                            <li>Scan the QR code or enter the UPI ID: <strong>trishulkumar6996@oksbi</strong></li>
+                            <li>Enter the amount: <strong>₹{{ "%.2f"|format(order.total_amount) }}</strong></li>
+                            <li>Add reference: <strong>Order #{{ order.id }}</strong></li>
+                            <li>Complete the payment and click "Payment Done" below</li>
+                        </ol>
+                    </div>
+
+                    <!-- Payment Confirmation -->
+                    <div class="text-center mt-4">
+                        <button class="btn btn-success btn-lg me-3" id="paymentDoneBtn">
+                            <i class="fas fa-check"></i> Payment Done
+                        </button>
+                        <a href="{{ url_for('consumer_dashboard') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Dashboard
+                        </a>
+                    </div>
+
+                    <!-- Payment Status -->
+                    <div id="paymentStatus" class="mt-4" style="display: none;">
+                        <div class="alert alert-success text-center">
+                            <i class="fas fa-check-circle fa-2x mb-2"></i>
+                            <h5>Payment Confirmed!</h5>
+                            <p class="mb-0">Your order has been confirmed and will be processed soon.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    $('#paymentDoneBtn').click(function() {
+        confirmPayment();
+    });
+});
+
+function copyUpiId() {
+    const upiId = 'trishulkumar6996@oksbi';
+    navigator.clipboard.writeText(upiId).then(function() {
+        // Show success message
+        const toast = $(`
+            <div class="toast position-fixed top-0 end-0 m-3" style="z-index: 9999;">
+                <div class="toast-body bg-success text-white">
+                    <i class="fas fa-check"></i> UPI ID copied to clipboard!
+                </div>
+            </div>
+        `);
+        $('body').append(toast);
+        toast.toast({delay: 2000}).toast('show');
+        toast.on('hidden.bs.toast', function() {
+            $(this).remove();
+        });
+    });
+}
+
+function confirmPayment() {
+    if (!confirm('Have you completed the UPI payment?')) {
+        return;
+    }
+    
+    $.ajax({
+        url: '/confirm_payment',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            order_id: {{ order.id }}
+        }),
+        success: function(response) {
+            if (response.success) {
+                $('#paymentStatus').show();
+                $('#paymentDoneBtn').hide();
+                
+                // Redirect to dashboard after 3 seconds
+                setTimeout(function() {
+                    window.location.href = '{{ url_for("consumer_dashboard") }}';
+                }, 3000);
+            } else {
+                alert('Error: ' + response.message);
+            }
+        },
+        error: function() {
+            alert('Failed to confirm payment. Please try again.');
+        }
+    });
+}
+</script>
+{% endblock %}

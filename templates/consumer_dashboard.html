@@ -1,0 +1,678 @@
+{% extends "base.html" %}
+
+{% block title %}Consumer Dashboard - FARMERS MART{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Dashboard Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="fas fa-shopping-cart text-success"></i> Consumer Dashboard</h2>
+                    <p class="text-muted">Welcome back, {{ session.user_name }}!</p>
+                </div>
+                <div>
+                    <button class="btn btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#cartModal">
+                        <i class="fas fa-shopping-cart"></i> Cart <span class="badge bg-primary" id="cartCount">0</span>
+                    </button>
+                    <a href="{{ url_for('marketplace') }}" class="btn btn-primary">
+                        <i class="fas fa-store"></i> Browse Marketplace
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weather Recommendations -->
+    {% if weather %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-info bg-opacity-10 border-info">
+                <div class="card-header bg-transparent border-info text-info fw-bold">
+                    <i class="{{ weather.icon }} me-2"></i> Weather Recommendation
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div>
+                            <h5 class="mb-0 text-dark">It's a {{ weather.condition }} day!</h5>
+                            <small class="text-muted">We recommend these products for you: {{ weather.keywords|join(', ') }}</small>
+                        </div>
+                    </div>
+                    {% if recommended_products %}
+                        <div class="row">
+                            {% for product in recommended_products %}
+                                <div class="col-lg-2 col-md-3 col-sm-4 mb-3">
+                                    <div class="card h-100 border-0 shadow-sm">
+                                        {% if product.image_filename %}
+                                            <img src="{{ url_for('static', filename='uploads/' + product.image_filename) }}" 
+                                                 class="card-img-top" alt="{{ product.name }}" style="height: 100px; object-fit: cover;">
+                                        {% else %}
+                                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 100px;">
+                                                <i class="fas fa-leaf text-muted"></i>
+                                            </div>
+                                        {% endif %}
+                                        <div class="card-body p-2 text-center">
+                                            <h6 class="card-title text-truncate mb-1" title="{{ product.name }}">{{ product.name }}</h6>
+                                            <p class="card-text text-success small fw-bold mb-1">₹{{ "%.0f"|format(product.price) }}/kg</p>
+                                            <button class="btn btn-sm btn-outline-primary w-100 view-product" 
+                                                    data-product-id="{{ product.id }}"
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#productModal">
+                                                View
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">No specific recommendations available right now, but check out our full fresh catalog!</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Search and Filter -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="searchInput" placeholder="Search for products...">
+                                <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-select" id="sortSelect">
+                                <option value="">Sort by</option>
+                                <option value="name_asc">Name (A-Z)</option>
+                                <option value="name_desc">Name (Z-A)</option>
+                                <option value="price_asc">Price (Low to High)</option>
+                                <option value="price_desc">Price (High to Low)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Products Grid -->
+    <div class="row" id="productsGrid">
+        {% if products %}
+            {% for product in products %}
+            <div class="col-lg-3 col-md-4 col-sm-6 mb-4 product-card" 
+                 data-name="{{ product.name.lower() }}" 
+                 data-price="{{ product.price }}">
+                <div class="card h-100">
+                    {% if product.image_filename %}
+                        <img src="{{ url_for('static', filename='uploads/' + product.image_filename) }}" 
+                             class="card-img-top product-image" alt="{{ product.name }}">
+                    {% else %}
+                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center product-image">
+                            <i class="fas fa-image fa-3x text-muted"></i>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">{{ product.name }}</h5>
+                        <p class="card-text text-muted small">{{ product.description[:80] }}...</p>
+                        <div class="mt-auto">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="h5 text-success mb-0">₹{{ "%.2f"|format(product.price) }}/kg</span>
+                                <small class="text-muted">{{ product.quantity }} kg available</small>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-primary btn-sm flex-fill view-product" 
+                                        data-product-id="{{ product.id }}"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#productModal">
+                                    <i class="fas fa-eye"></i> View
+                                </button>
+                                <button class="btn btn-primary btn-sm flex-fill add-to-cart" 
+                                        data-product-id="{{ product.id }}"
+                                        data-product-name="{{ product.name }}"
+                                        data-product-price="{{ product.price }}"
+                                        data-max-quantity="{{ product.quantity }}">
+                                    <i class="fas fa-cart-plus"></i> Add to Cart
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="fas fa-seedling fa-3x text-muted mb-3"></i>
+                    <h5>No Products Available</h5>
+                    <p class="text-muted">Check back later for fresh products from our farmers.</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Product Detail Modal -->
+<div class="modal fade" id="productModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="productModalTitle">Product Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="productModalBody">
+                <!-- Product details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="addToCartFromModal">
+                    <i class="fas fa-cart-plus"></i> Add to Cart
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cart Modal -->
+<div class="modal fade" id="cartModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-shopping-cart"></i> Shopping Cart</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="cartItems">
+                    <!-- Cart items will be loaded here -->
+                </div>
+                <div id="emptyCart" class="text-center py-4" style="display: none;">
+                    <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                    <h5>Your cart is empty</h5>
+                    <p class="text-muted">Add some fresh products to get started!</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="w-100">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">Total: ₹<span id="cartTotal">0.00</span></h5>
+                        <div>
+                            <button type="button" class="btn btn-outline-danger me-2" id="clearCart">
+                                <i class="fas fa-trash"></i> Clear Cart
+                            </button>
+                            <button type="button" class="btn btn-success" id="proceedToCheckout">
+                                <i class="fas fa-credit-card"></i> Proceed to Checkout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add to Cart Modal -->
+<div class="modal fade" id="addToCartModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add to Cart</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <h6 id="addToCartProductName"></h6>
+                    <p class="text-muted">₹<span id="addToCartProductPrice"></span>/kg</p>
+                </div>
+                <div class="mb-3">
+                    <label for="quantityInput" class="form-label">Quantity (kg)</label>
+                    <div class="input-group">
+                        <button class="btn btn-outline-secondary" type="button" id="decreaseQty">-</button>
+                        <input type="number" class="form-control text-center" id="quantityInput" value="1" min="1">
+                        <button class="btn btn-outline-secondary" type="button" id="increaseQty">+</button>
+                    </div>
+                    <small class="text-muted">Max: <span id="maxQuantity"></span> kg available</small>
+                </div>
+                <div class="text-center">
+                    <strong>Total: ₹<span id="itemTotal">0.00</span></strong>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmAddToCart">
+                    <i class="fas fa-cart-plus"></i> Add to Cart
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let cart = JSON.parse(localStorage.getItem('cart')) || [];
+let currentProduct = null;
+
+$(document).ready(function() {
+    // Bootstrap 5 modal helpers (Bootstrap 4's jQuery .modal() is not available)
+    function showModalById(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        bootstrap.Modal.getOrCreateInstance(el).show();
+    }
+
+    function hideModalById(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        bootstrap.Modal.getOrCreateInstance(el).hide();
+    }
+
+    updateCartCount();
+    
+    // Search functionality
+    $('#searchBtn, #searchInput').on('click keypress', function(e) {
+        if (e.type === 'click' || e.which === 13) {
+            filterProducts();
+        }
+    });
+    
+    // Sort functionality
+    $('#sortSelect').change(function() {
+        sortProducts($(this).val());
+    });
+    
+    // View product details
+    $('.view-product').click(function() {
+        const productId = $(this).data('product-id');
+        loadProductDetails(productId);
+    });
+    
+    // Add to cart button
+    $('.add-to-cart').click(function() {
+        currentProduct = {
+            id: $(this).data('product-id'),
+            name: $(this).data('product-name'),
+            price: parseFloat($(this).data('product-price')),
+            maxQuantity: parseInt($(this).data('max-quantity'))
+        };
+        
+        $('#addToCartProductName').text(currentProduct.name);
+        $('#addToCartProductPrice').text(currentProduct.price.toFixed(2));
+        $('#maxQuantity').text(currentProduct.maxQuantity);
+        $('#quantityInput').attr('max', currentProduct.maxQuantity).val(1);
+        updateItemTotal();
+        
+        showModalById('addToCartModal');
+    });
+    
+    // Quantity controls
+    $('#decreaseQty').click(function() {
+        const qty = parseInt($('#quantityInput').val());
+        if (qty > 1) {
+            $('#quantityInput').val(qty - 1);
+            updateItemTotal();
+        }
+    });
+    
+    $('#increaseQty').click(function() {
+        const qty = parseInt($('#quantityInput').val());
+        const max = parseInt($('#quantityInput').attr('max'));
+        if (qty < max) {
+            $('#quantityInput').val(qty + 1);
+            updateItemTotal();
+        }
+    });
+    
+    $('#quantityInput').on('input', updateItemTotal);
+    
+    // Confirm add to cart
+    $('#confirmAddToCart').click(function() {
+        const quantity = parseInt($('#quantityInput').val());
+        addToCart(currentProduct, quantity);
+        hideModalById('addToCartModal');
+    });
+    
+    // Load cart when cart modal is opened
+    $('#cartModal').on('show.bs.modal', function() {
+        loadCart();
+    });
+    
+    // Clear cart
+    $('#clearCart').click(function() {
+        if (confirm('Are you sure you want to clear your cart?')) {
+            cart = [];
+            localStorage.setItem('cart', JSON.stringify(cart));
+            updateCartCount();
+            loadCart();
+        }
+    });
+    
+    // Proceed to checkout
+    $('#proceedToCheckout').click(function() {
+        if (cart.length === 0) {
+            alert('Your cart is empty!');
+            return;
+        }
+        
+        // Redirect to checkout page
+        window.location.href = '/checkout';
+    });
+});
+
+function filterProducts() {
+    const searchTerm = $('#searchInput').val().toLowerCase();
+    $('.product-card').each(function() {
+        const productName = $(this).data('name');
+        if (productName.includes(searchTerm)) {
+            $(this).show();
+        } else {
+            $(this).hide();
+        }
+    });
+}
+
+function sortProducts(sortBy) {
+    const container = $('#productsGrid');
+    const products = container.children('.product-card').get();
+    
+    products.sort(function(a, b) {
+        switch (sortBy) {
+            case 'name_asc':
+                return $(a).data('name').localeCompare($(b).data('name'));
+            case 'name_desc':
+                return $(b).data('name').localeCompare($(a).data('name'));
+            case 'price_asc':
+                return $(a).data('price') - $(b).data('price');
+            case 'price_desc':
+                return $(b).data('price') - $(a).data('price');
+            default:
+                return 0;
+        }
+    });
+    
+    $.each(products, function(index, item) {
+        container.append(item);
+    });
+}
+
+function loadProductDetails(productId) {
+    $.ajax({
+        url: '/get_product_details/' + productId,
+        method: 'GET',
+        success: function(product) {
+            const modalBody = $('#productModalBody');
+            
+            // Build reviews HTML
+            let reviewsHtml = '';
+            if (product.reviews && product.reviews.length > 0) {
+                reviewsHtml = '<div class="mt-4"><h6 class="border-bottom pb-2">Reviews (' + product.review_count + ')</h6>';
+                product.reviews.forEach(review => {
+                    reviewsHtml += `
+                        <div class="mb-3 border-bottom pb-2">
+                            <div class="d-flex justify-content-between">
+                                <strong>${review.user_name}</strong>
+                                <small class="text-muted">${review.created_at}</small>
+                            </div>
+                            <div class="text-warning mb-1">
+                                ${'<i class="fas fa-star"></i>'.repeat(review.rating)}
+                                ${'<i class="far fa-star"></i>'.repeat(5 - review.rating)}
+                            </div>
+                            <p class="mb-0 small">${review.comment || ''}</p>
+                        </div>
+                    `;
+                });
+                reviewsHtml += '</div>';
+            } else {
+                reviewsHtml = '<div class="mt-4"><h6 class="border-bottom pb-2">Reviews</h6><p class="text-muted small">No reviews yet. Be the first to review!</p></div>';
+            }
+
+            // Review Form
+            const reviewFormHtml = `
+                <div class="mt-4 p-3 bg-light rounded">
+                    <h6>Write a Review</h6>
+                    <form id="reviewForm">
+                        <input type="hidden" id="reviewProductId" value="${product.id}">
+                        <div class="mb-2">
+                            <label class="form-label small mb-1">Rating</label>
+                            <div class="rating-input">
+                                <div class="btn-group" role="group">
+                                    <input type="radio" class="btn-check" name="rating" id="rating1" value="1" autocomplete="off">
+                                    <label class="btn btn-outline-warning btn-sm" for="rating1">1</label>
+                                    <input type="radio" class="btn-check" name="rating" id="rating2" value="2" autocomplete="off">
+                                    <label class="btn btn-outline-warning btn-sm" for="rating2">2</label>
+                                    <input type="radio" class="btn-check" name="rating" id="rating3" value="3" autocomplete="off">
+                                    <label class="btn btn-outline-warning btn-sm" for="rating3">3</label>
+                                    <input type="radio" class="btn-check" name="rating" id="rating4" value="4" autocomplete="off">
+                                    <label class="btn btn-outline-warning btn-sm" for="rating4">4</label>
+                                    <input type="radio" class="btn-check" name="rating" id="rating5" value="5" autocomplete="off" checked>
+                                    <label class="btn btn-outline-warning btn-sm" for="rating5">5</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <textarea class="form-control form-control-sm" id="reviewComment" rows="2" placeholder="Share your experience..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-primary">Submit Review</button>
+                    </form>
+                </div>
+            `;
+
+            modalBody.html(`
+                <div class="row">
+                    <div class="col-md-6">
+                        ${product.image_filename ? 
+                            `<img src="/static/uploads/${product.image_filename}" class="img-fluid rounded" alt="${product.name}">` :
+                            `<div class="bg-light d-flex align-items-center justify-content-center rounded" style="height: 300px;">
+                                <i class="fas fa-image fa-3x text-muted"></i>
+                            </div>`
+                        }
+                    </div>
+                    <div class="col-md-6">
+                        <h4>${product.name}</h4>
+                        <div class="mb-2">
+                            <span class="badge bg-success me-2">₹${product.price.toFixed(2)}/kg</span>
+                            <span class="text-warning">
+                                <i class="fas fa-star"></i> ${product.avg_rating} (${product.review_count})
+                            </span>
+                        </div>
+                        <p class="text-muted">${product.description}</p>
+                        <p><strong>Available:</strong> ${product.quantity} kg</p>
+                        <p><strong>Farmer:</strong> ${product.farmer_name}</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        ${reviewsHtml}
+                        ${reviewFormHtml}
+                    </div>
+                </div>
+            `);
+            
+            // Handle Review Submission
+            $('#reviewForm').on('submit', function(e) {
+                e.preventDefault();
+                const rating = $('input[name="rating"]:checked').val();
+                const comment = $('#reviewComment').val();
+                
+                $.ajax({
+                    url: '/submit_review',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        product_id: product.id,
+                        rating: rating,
+                        comment: comment
+                    }),
+                    success: function(response) {
+                        if (response.success) {
+                            alert('Review submitted successfully!');
+                            loadProductDetails(product.id); // Reload to show new review
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function() {
+                        alert('Failed to submit review');
+                    }
+                });
+            });
+
+            $('#addToCartFromModal').off('click').on('click', function() {
+                currentProduct = {
+                    id: product.id,
+                    name: product.name,
+                    price: product.price,
+                    maxQuantity: product.quantity
+                };
+                
+                hideModalById('productModal');
+                $('#addToCartProductName').text(currentProduct.name);
+                $('#addToCartProductPrice').text(currentProduct.price.toFixed(2));
+                $('#maxQuantity').text(currentProduct.maxQuantity);
+                $('#quantityInput').attr('max', currentProduct.maxQuantity).val(1);
+                updateItemTotal();
+                showModalById('addToCartModal');
+            });
+        },
+        error: function() {
+            alert('Failed to load product details.');
+        }
+    });
+}
+
+function updateItemTotal() {
+    const quantity = parseInt($('#quantityInput').val()) || 1;
+    const price = currentProduct ? currentProduct.price : 0;
+    const total = quantity * price;
+    $('#itemTotal').text(total.toFixed(2));
+}
+
+function addToCart(product, quantity) {
+    const existingItem = cart.find(item => item.id === product.id);
+    
+    if (existingItem) {
+        existingItem.quantity += quantity;
+        if (existingItem.quantity > product.maxQuantity) {
+            existingItem.quantity = product.maxQuantity;
+        }
+    } else {
+        cart.push({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            quantity: quantity,
+            maxQuantity: product.maxQuantity
+        });
+    }
+    
+    localStorage.setItem('cart', JSON.stringify(cart));
+    updateCartCount();
+    
+    // Show success message (Bootstrap 5 Toast)
+    const container = document.createElement('div');
+    container.className = 'position-fixed top-0 end-0 p-3';
+    container.style.zIndex = '1080';
+
+    const toastEl = document.createElement('div');
+    toastEl.className = 'toast align-items-center text-white bg-success border-0';
+    toastEl.setAttribute('role', 'alert');
+    toastEl.setAttribute('aria-live', 'assertive');
+    toastEl.setAttribute('aria-atomic', 'true');
+    toastEl.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-check"></i> ${product.name} added to cart!
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>`;
+
+    container.appendChild(toastEl);
+    document.body.appendChild(container);
+
+    const toast = bootstrap.Toast.getOrCreateInstance(toastEl, { delay: 3000 });
+    toast.show();
+    toastEl.addEventListener('hidden.bs.toast', () => {
+        container.remove();
+    });
+}
+
+function updateCartCount() {
+    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+    $('#cartCount').text(totalItems);
+}
+
+function loadCart() {
+    const cartItems = $('#cartItems');
+    const emptyCart = $('#emptyCart');
+    
+    if (cart.length === 0) {
+        cartItems.hide();
+        emptyCart.show();
+        $('#cartTotal').text('0.00');
+        return;
+    }
+    
+    emptyCart.hide();
+    cartItems.show();
+    
+    let cartHtml = '';
+    let total = 0;
+    
+    cart.forEach((item, index) => {
+        const itemTotal = item.price * item.quantity;
+        total += itemTotal;
+        
+        cartHtml += `
+            <div class="d-flex justify-content-between align-items-center border-bottom py-3">
+                <div class="flex-grow-1">
+                    <h6 class="mb-1">${item.name}</h6>
+                    <small class="text-muted">₹${item.price.toFixed(2)}/kg</small>
+                </div>
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-sm btn-outline-secondary me-2" onclick="updateCartQuantity(${index}, -1)">-</button>
+                    <span class="mx-2">${item.quantity} kg</span>
+                    <button class="btn btn-sm btn-outline-secondary me-3" onclick="updateCartQuantity(${index}, 1)">+</button>
+                    <strong class="me-3">₹${itemTotal.toFixed(2)}</strong>
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeFromCart(${index})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    cartItems.html(cartHtml);
+    $('#cartTotal').text(total.toFixed(2));
+}
+
+function updateCartQuantity(index, change) {
+    const item = cart[index];
+    item.quantity += change;
+    
+    if (item.quantity <= 0) {
+        cart.splice(index, 1);
+    } else if (item.quantity > item.maxQuantity) {
+        item.quantity = item.maxQuantity;
+    }
+    
+    localStorage.setItem('cart', JSON.stringify(cart));
+    updateCartCount();
+    loadCart();
+}
+
+function removeFromCart(index) {
+    cart.splice(index, 1);
+    localStorage.setItem('cart', JSON.stringify(cart));
+    updateCartCount();
+    loadCart();
+}
+</script>
+{% endblock %}

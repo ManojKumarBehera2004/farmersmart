@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Customer Orders - FARMERS MART{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2><i class="fas fa-clipboard-list text-success"></i> Customer Orders</h2>
+                    <p class="text-muted">Manage orders for your products</p>
+                </div>
+                <a href="{{ url_for('farmer_dashboard') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Orders List -->
+    {% if orders %}
+        <div class="row">
+            {% for order in orders %}
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="row align-items-center">
+                            <div class="col-md-3">
+                                <h6 class="mb-0">Order #{{ order.id }}</h6>
+                                <small class="text-muted">{{ order.created_at.strftime('%d %b %Y, %I:%M %p') }}</small>
+                            </div>
+                            <div class="col-md-3">
+                                <strong>Customer:</strong> {{ order.consumer.name }}
+                                <br><small class="text-muted">{{ order.consumer.phone_number }}</small>
+                            </div>
+                            <div class="col-md-3">
+                                {% if order.status == 'pending' %}
+                                    <span class="badge bg-warning">Pending</span>
+                                {% elif order.status == 'confirmed' %}
+                                    <span class="badge bg-info">Confirmed</span>
+                                {% elif order.status == 'delivered' %}
+                                    <span class="badge bg-success">Delivered</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ order.status.title() }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-3">
+                                {% if order.payment_status == 'paid' %}
+                                    <span class="badge bg-success">Paid</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Payment Pending</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h6>Your Products in this Order:</h6>
+                                {% set farmer_total = 0 %}
+                                {% for item in order.order_items %}
+                                    {% if item.product.farmer_id == session.user_id %}
+                                        {% set farmer_total = farmer_total + (item.price * item.quantity) %}
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <div class="d-flex align-items-center">
+                                                {% if item.product.image_filename %}
+                                                    <img src="{{ url_for('static', filename='uploads/' + item.product.image_filename) }}" 
+                                                         alt="{{ item.product.name }}" class="me-3" 
+                                                         style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                                                {% else %}
+                                                    <div class="bg-light me-3 d-flex align-items-center justify-content-center" 
+                                                         style="width: 40px; height: 40px; border-radius: 4px;">
+                                                        <i class="fas fa-image text-muted"></i>
+                                                    </div>
+                                                {% endif %}
+                                                <div>
+                                                    <strong>{{ item.product.name }}</strong>
+                                                    <br><small class="text-muted">{{ item.quantity }} kg × ₹{{ "%.2f"|format(item.price) }}/kg</small>
+                                                </div>
+                                            </div>
+                                            <strong>₹{{ "%.2f"|format(item.price * item.quantity) }}</strong>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                                <hr>
+                                <div class="d-flex justify-content-between">
+                                    <strong>Your Earnings from this Order:</strong>
+                                    <strong class="text-success">₹{{ "%.2f"|format(farmer_total) }}</strong>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                {% if order.status != 'delivered' and order.payment_status == 'paid' %}
+                                    <div class="d-grid gap-2">
+                                        {% if order.status == 'pending' %}
+                                            <button class="btn btn-success btn-sm update-status" 
+                                                    data-order-id="{{ order.id }}" 
+                                                    data-status="confirmed">
+                                                <i class="fas fa-check"></i> Confirm Order
+                                            </button>
+                                        {% elif order.status == 'confirmed' %}
+                                            <button class="btn btn-primary btn-sm update-status" 
+                                                    data-order-id="{{ order.id }}" 
+                                                    data-status="delivered">
+                                                <i class="fas fa-truck"></i> Mark as Delivered
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                {% elif order.payment_status == 'pending' %}
+                                    <div class="alert alert-warning alert-sm">
+                                        <small><i class="fas fa-clock"></i> Waiting for customer payment</small>
+                                    </div>
+                                {% elif order.status == 'delivered' %}
+                                    <div class="alert alert-success alert-sm">
+                                        <small><i class="fas fa-check"></i> Order completed</small>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+            <h5>No Orders Yet</h5>
+            <p class="text-muted">Orders for your products will appear here.</p>
+            <a href="{{ url_for('farmer_dashboard') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add More Products
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    $('.update-status').click(function() {
+        const orderId = $(this).data('order-id');
+        const newStatus = $(this).data('status');
+        const button = $(this);
+        
+        if (!confirm(`Are you sure you want to mark this order as ${newStatus}?`)) {
+            return;
+        }
+        
+        $.ajax({
+            url: '/update_order_status',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                order_id: orderId,
+                status: newStatus
+            }),
+            success: function(response) {
+                if (response.success) {
+                    alert('Order status updated successfully!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + response.message);
+                }
+            },
+            error: function() {
+                alert('Failed to update order status. Please try again.');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

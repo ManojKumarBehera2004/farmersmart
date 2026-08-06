@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">Welcome to FARMERS MART</h1>
+                <p class="lead mb-4">Connect directly with local farmers and get the freshest produce delivered to your doorstep. Support local agriculture while enjoying quality, organic products.</p>
+                <div class="d-flex gap-3">
+                    <a href="{{ url_for('register') }}" class="btn btn-light btn-lg">
+                        <i class="fas fa-user-plus"></i> Get Started
+                    </a>
+                    <a href="{{ url_for('marketplace') }}" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-store"></i> Browse Products
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6 text-center">
+                <i class="fas fa-tractor" style="font-size: 8rem; opacity: 0.8;"></i>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-12">
+                <h2 class="display-5 fw-bold mb-3">Why Choose FARMERS MART?</h2>
+                <p class="lead text-muted">Bridging the gap between farmers and consumers</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4 text-center">
+                <div class="feature-icon">
+                    <i class="fas fa-leaf"></i>
+                </div>
+                <h4>Fresh & Organic</h4>
+                <p class="text-muted">Get farm-fresh, organic produce directly from local farmers without any middlemen.</p>
+            </div>
+            
+            <div class="col-md-4 text-center">
+                <div class="feature-icon">
+                    <i class="fas fa-handshake"></i>
+                </div>
+                <h4>Support Farmers</h4>
+                <p class="text-muted">Help local farmers get fair prices for their hard work and dedication.</p>
+            </div>
+            
+            <div class="col-md-4 text-center">
+                <div class="feature-icon">
+                    <i class="fas fa-mobile-alt"></i>
+                </div>
+                <h4>Easy to Use</h4>
+                <p class="text-muted">Simple mobile-friendly platform with secure OTP-based authentication.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-12">
+                <h2 class="display-5 fw-bold mb-3">How It Works</h2>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-seedling feature-icon"></i>
+                        <h4 class="card-title">For Farmers</h4>
+                        <p class="card-text">Register as a farmer, add your products with photos and descriptions, manage inventory, and receive orders directly from consumers.</p>
+                        <a href="{{ url_for('register') }}" class="btn btn-primary">Join as Farmer</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-shopping-cart feature-icon"></i>
+                        <h4 class="card-title">For Consumers</h4>
+                        <p class="card-text">Browse fresh products, add to cart, make secure payments via UPI, and get your orders delivered fresh from the farm.</p>
+                        <a href="{{ url_for('register') }}" class="btn btn-primary">Shop Now</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-3">
+                <h3 class="display-4 fw-bold text-success">100+</h3>
+                <p class="text-muted">Registered Farmers</p>
+            </div>
+            <div class="col-md-3">
+                <h3 class="display-4 fw-bold text-success">500+</h3>
+                <p class="text-muted">Fresh Products</p>
+            </div>
+            <div class="col-md-3">
+                <h3 class="display-4 fw-bold text-success">1000+</h3>
+                <p class="text-muted">Happy Customers</p>
+            </div>
+            <div class="col-md-3">
+                <h3 class="display-4 fw-bold text-success">50+</h3>
+                <p class="text-muted">Cities Served</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

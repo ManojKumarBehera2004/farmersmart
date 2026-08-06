@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}Login - FARMERS MART{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-sign-in-alt fa-3x text-success mb-3"></i>
+                        <h2 class="card-title">Welcome Back</h2>
+                        <p class="text-muted">Login to your FARMERS MART account</p>
+                    </div>
+
+                    <form id="loginForm">
+                        <!-- Step 1: Phone Number -->
+                        <div id="step1">
+                            <div class="mb-4">
+                                <label for="phone" class="form-label">Mobile Number</label>
+                                <input type="tel" class="form-control" id="phone" placeholder="+91XXXXXXXXXX" required>
+                            </div>
+
+                            <button type="button" class="btn btn-primary w-100" id="sendOtpBtn">
+                                <i class="fas fa-mobile-alt"></i> Send OTP
+                            </button>
+                        </div>
+
+                        <!-- Step 2: OTP Verification -->
+                        <div id="step2" style="display: none;">
+                            <div class="text-center mb-4">
+                                <i class="fas fa-shield-alt fa-2x text-success mb-3"></i>
+                                <h5>Verify Your Identity</h5>
+                                <p class="text-muted">Enter the 6-digit OTP sent to your mobile number</p>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="otp" class="form-label">Enter OTP</label>
+                                <input type="text" class="form-control text-center" id="otp" maxlength="6"
+                                    placeholder="000000" required>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-check"></i> Verify & Login
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="resendOtpBtn">
+                                    <i class="fas fa-redo"></i> Resend OTP
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div class="text-center mt-4">
+                        <p>Don't have an account? <a href="{{ url_for('register') }}">Register here</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    #otp {
+        font-size: 1.5rem;
+        letter-spacing: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentPhone = '';
+
+    $(document).ready(function () {
+        // Send OTP
+        $('#sendOtpBtn').click(function () {
+            const phone = $('#phone').val().trim();
+
+            if (!phone) {
+                alert('Please enter your mobile number');
+                return;
+            }
+
+            if (!phone.match(/^\+?[1-9]\d{1,14}$/)) {
+                alert('Please enter a valid mobile number');
+                return;
+            }
+
+            currentPhone = phone;
+
+            $.ajax({
+                url: '/send_otp',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    phone_number: phone
+                }),
+                success: function (response) {
+                    if (response.success) {
+                        $('#step1').hide();
+                        $('#step2').show();
+                        let msg = 'OTP sent successfully!';
+                        if (response.debug_otp) {
+                        } else {
+                            msg += ' Check console for OTP (demo mode)';
+                        }
+                        alert(msg);
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function () {
+                    alert('Failed to send OTP. Please try again.');
+                }
+            });
+        });
+
+        // Verify OTP and Login
+        $('#loginForm').submit(function (e) {
+            e.preventDefault();
+
+            const otp = $('#otp').val().trim();
+
+            if (!otp || otp.length !== 6) {
+                alert('Please enter a valid 6-digit OTP');
+                return;
+            }
+
+            $.ajax({
+                url: '/verify_otp',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    phone_number: currentPhone,
+                    otp: otp
+                }),
+                success: function (response) {
+                    if (response.success) {
+                        alert('Login successful!');
+                        window.location.href = response.redirect;
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function () {
+                    alert('Login failed. Please try again.');
+                }
+            });
+        });
+
+        // Resend OTP
+        $('#resendOtpBtn').click(function () {
+            $('#sendOtpBtn').click();
+        });
+
+        // OTP input formatting
+        $('#otp').on('input', function () {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    });
+</script>
+{% endblock %}

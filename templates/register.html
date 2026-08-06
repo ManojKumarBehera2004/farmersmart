@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block title %}Register - FARMERS MART{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-user-plus fa-3x text-success mb-3"></i>
+                        <h2 class="card-title">Join FARMERS MART</h2>
+                        <p class="text-muted">Create your account with mobile verification</p>
+                    </div>
+
+                    <form id="registrationForm">
+                        <!-- Step 1: User Details -->
+                        <div id="step1">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Full Name</label>
+                                <input type="text" class="form-control" id="name" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="phone" class="form-label">Mobile Number</label>
+                                <input type="tel" class="form-control" id="phone" placeholder="+91XXXXXXXXXX" required>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label">I am a:</label>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="card user-type-card" data-type="farmer">
+                                            <div class="card-body text-center">
+                                                <i class="fas fa-seedling fa-2x text-success mb-2"></i>
+                                                <h6>Farmer</h6>
+                                                <small class="text-muted">Sell your products</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="card user-type-card" data-type="consumer">
+                                            <div class="card-body text-center">
+                                                <i class="fas fa-shopping-cart fa-2x text-success mb-2"></i>
+                                                <h6>Consumer</h6>
+                                                <small class="text-muted">Buy fresh products</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="button" class="btn btn-primary w-100" id="sendOtpBtn">
+                                <i class="fas fa-mobile-alt"></i> Send OTP
+                            </button>
+                        </div>
+
+                        <!-- Step 2: OTP Verification -->
+                        <div id="step2" style="display: none;">
+                            <div class="text-center mb-4">
+                                <i class="fas fa-shield-alt fa-2x text-success mb-3"></i>
+                                <h5>Verify Your Mobile</h5>
+                                <p class="text-muted">Enter the 6-digit OTP sent to your mobile number</p>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="otp" class="form-label">Enter OTP</label>
+                                <input type="text" class="form-control text-center" id="otp" maxlength="6"
+                                    placeholder="000000" required>
+                            </div>
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-check"></i> Verify & Register
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="resendOtpBtn">
+                                    <i class="fas fa-redo"></i> Resend OTP
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div class="text-center mt-4">
+                        <p>Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .user-type-card {
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+
+    .user-type-card:hover {
+        border-color: var(--primary-green);
+        transform: translateY(-2px);
+    }
+
+    .user-type-card.selected {
+        border-color: var(--primary-green);
+        background-color: var(--light-green);
+    }
+
+    #otp {
+        font-size: 1.5rem;
+        letter-spacing: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let selectedUserType = '';
+    let currentPhone = '';
+
+    $(document).ready(function () {
+        // User type selection
+        $('.user-type-card').click(function () {
+            $('.user-type-card').removeClass('selected');
+            $(this).addClass('selected');
+            selectedUserType = $(this).data('type');
+        });
+
+        // Send OTP
+        $('#sendOtpBtn').click(function () {
+            const name = $('#name').val().trim();
+            const phone = $('#phone').val().trim();
+
+            if (!name || !phone || !selectedUserType) {
+                alert('Please fill all fields and select user type');
+                return;
+            }
+
+            if (!phone.match(/^\+?[1-9]\d{1,14}$/)) {
+                alert('Please enter a valid mobile number');
+                return;
+            }
+
+            currentPhone = phone;
+
+            $.ajax({
+                url: '/send_otp',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    phone_number: phone
+                }),
+                success: function (response) {
+                    if (response.success) {
+                        $('#step1').hide();
+                        $('#step2').show();
+                        let msg = 'OTP sent successfully!';
+                        if (response.debug_otp) {
+                        } else {
+                            msg += ' Check console for OTP (demo mode)';
+                        }
+                        alert(msg);
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function () {
+                    alert('Failed to send OTP. Please try again.');
+                }
+            });
+        });
+
+        // Verify OTP and Register
+        $('#registrationForm').submit(function (e) {
+            e.preventDefault();
+
+            const otp = $('#otp').val().trim();
+            const name = $('#name').val().trim();
+
+            if (!otp || otp.length !== 6) {
+                alert('Please enter a valid 6-digit OTP');
+                return;
+            }
+
+            $.ajax({
+                url: '/verify_otp',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    phone_number: currentPhone,
+                    otp: otp,
+                    name: name,
+                    user_type: selectedUserType
+                }),
+                success: function (response) {
+                    if (response.success) {
+                        alert('Registration successful!');
+                        window.location.href = response.redirect;
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function () {
+                    alert('Registration failed. Please try again.');
+                }
+            });
+        });
+
+        // Resend OTP
+        $('#resendOtpBtn').click(function () {
+            $('#sendOtpBtn').click();
+        });
+
+        // OTP input formatting
+        $('#otp').on('input', function () {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    });
+</script>
+{% endblock %}

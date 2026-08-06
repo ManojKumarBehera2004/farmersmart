@@ -1,0 +1,99 @@
+/* Custom CSS for Farmers Mart */
+:root {
+    --primary-green: #28a745;
+    --secondary-green: #20c997;
+    --dark-green: #155724;
+    --light-green: #d4edda;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+}
+
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.5rem;
+    color: var(--primary-green) !important;
+}
+
+.btn-primary {
+    background-color: var(--primary-green);
+    border-color: var(--primary-green);
+}
+
+.btn-primary:hover {
+    background-color: var(--dark-green);
+    border-color: var(--dark-green);
+}
+
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.hero-section {
+    background: linear-gradient(135deg, var(--primary-green), var(--secondary-green));
+    color: white;
+    padding: 4rem 0;
+}
+
+.feature-icon {
+    font-size: 3rem;
+    color: var(--primary-green);
+    margin-bottom: 1rem;
+}
+
+.product-image {
+    height: 200px;
+    object-fit: cover;
+}
+
+.footer {
+    background-color: var(--dark-green);
+    color: white;
+    padding: 2rem 0;
+    margin-top: 4rem;
+}
+
+.alert {
+    border: none;
+    border-radius: 0.5rem;
+}
+
+.form-control:focus {
+    border-color: var(--primary-green);
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+/* Loading animation */
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* Toast notifications */
+.toast {
+    min-width: 250px;
+}
+
+/* Product grid responsiveness */
+@media (max-width: 768px) {
+    .product-image {
+        height: 150px;
+    }
+    
+    .hero-section {
+        padding: 2rem 0;
+    }
+    
+    .feature-icon {
+        font-size: 2rem;
+    }
+}
